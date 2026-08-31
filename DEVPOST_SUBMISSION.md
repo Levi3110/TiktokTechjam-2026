@@ -143,10 +143,10 @@ remain subject to their own licenses and terms.
 On all 200 public sessions, with Qwen disabled to isolate retrieval quality,
 NAmazon achieved:
 
-- Hit Rate@10: **0.63**
-- MRR: **0.265123**
-- MTTC: **5.96 turns**
-- Technical Score: **0.495337**
+- Hit Rate@10: **0.675**
+- MRR: **0.412635**
+- MTTC: **4.815 turns**
+- Technical Score: **0.58499**
 
 This reproducible run reports zero LLM tokens. The optional self-hosted Qwen
 path has no per-token vendor charge in the current setup, but hardware cost and
@@ -156,6 +156,12 @@ Reproduce the evaluation after setup:
 
 ```bash
 QWEN_RERANK_ENABLED=false .venv/bin/python -m evaluator.local_evaluator
+```
+
+Route-level recall can be reproduced independently with:
+
+```bash
+QWEN_RERANK_ENABLED=false .venv/bin/python scripts/retrieval_diagnostics.py
 ```
 
 Run the automated tests:

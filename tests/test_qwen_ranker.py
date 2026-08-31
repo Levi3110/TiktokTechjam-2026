@@ -52,3 +52,30 @@ def test_qwen_reorders_candidates_and_reports_usage(monkeypatch) -> None:
     assert result.provider == "qwen3.6-27b"
     assert result.ask_attribute == "material"
     assert result.usage == {"prompt_tokens": 120, "completion_tokens": 30}
+
+
+def test_constraint_prerank_does_not_change_deterministic_fusion_fallback() -> None:
+    fused_first = Candidate(
+        {"parent_asin": "A", "title": "General boots"},
+        0.9,
+        {"bm25": 2.0},
+    )
+    exact_second = Candidate(
+        {"parent_asin": "B", "title": "Black leather winter boots"},
+        0.8,
+        {"metadata": 3.0},
+    )
+    ranker = QwenRanker()
+    ranker.enabled = False
+
+    result = ranker.rank(
+        intent="buying",
+        query="black leather winter boots",
+        constraints={"material": ["leather"]},
+        memory=[],
+        candidates=[fused_first, exact_second],
+        top_k=2,
+        proposed_question=None,
+    )
+
+    assert [item.product["parent_asin"] for item in result.candidates] == ["A", "B"]

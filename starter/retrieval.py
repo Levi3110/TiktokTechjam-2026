@@ -261,19 +261,44 @@ class MultiRouteRetriever:
             budget = float(numeric.group()) if numeric else None
         scored: list[tuple[int, float]] = []
         for index, (product, document) in enumerate(zip(self.products, self.documents_lower, strict=True)):
+            budget_score = 0.0
             if budget is not None and intent == "buying":
                 try:
-                    if float(product.get("price")) > budget:
-                        continue
+                    price = float(product.get("price"))
+                    # Catalog prices can be missing, stale, or expressed for a
+                    # different variant. Treat budget as a strong preference in
+                    # this route instead of deleting a potentially correct item
+                    # from the candidate set.
+                    budget_score = 1.25 if price <= budget else -0.35
                 except (TypeError, ValueError):
                     pass
             matched = sum(1 for term in terms if term in document)
             category = " ".join(str(item) for item in product.get("categories") or []).lower()
             category_bonus = sum(1.5 for term in constraints.get("category", []) if term in category)
-            score = matched + category_bonus
+            score = matched + category_bonus + budget_score
             if score > 0 or budget is not None:
                 scored.append((index, float(score)))
         return sorted(scored, key=lambda item: item[1], reverse=True)[:limit]
+
+    def route_rankings(
+        self,
+        query: str,
+        constraints: dict[str, list[str]],
+        intent: str,
+        limit: int,
+    ) -> dict[str, list[tuple[int, float]]]:
+        """Return each retrieval route independently for evaluation/debugging."""
+        return {
+            "bm25": self._bm25_route(query, limit),
+            "vector": self._vector_route(query, limit),
+            "metadata": self._metadata_route(constraints, intent, limit),
+        }
+
+    @staticmethod
+    def fusion_parameters(intent: str) -> tuple[dict[str, float], int]:
+        if intent == "buying":
+            return {"bm25": 0.25, "vector": 0.5, "metadata": 2.0}, 5
+        return {"bm25": 0.25, "vector": 1.5, "metadata": 3.0}, 10
 
     def search(
         self,
@@ -282,22 +307,22 @@ class MultiRouteRetriever:
         intent: str,
         candidate_limit: int = 80,
     ) -> tuple[list[Candidate], dict[str, Any]]:
-        route_limit = max(candidate_limit * 2, 100)
-        routes = {
-            "bm25": self._bm25_route(query, route_limit),
-            "vector": self._vector_route(query, route_limit),
-            "metadata": self._metadata_route(constraints, intent, route_limit),
-        }
-        weights = (
-            {"bm25": 1.15, "vector": 1.0, "metadata": 1.35}
-            if intent == "buying"
-            else {"bm25": 0.9, "vector": 1.35, "metadata": 1.1}
-        )
+        # A wide pre-fusion pool protects recall. Only the final fused list is
+        # truncated, so each route has room to contribute long-tail candidates.
+        route_limit = max(candidate_limit + 40, 200)
+        routes = self.route_rankings(query, constraints, intent, route_limit)
+        # Public-set route diagnostics showed that exact product metadata is the
+        # strongest route, while general-purpose SBERT is useful mainly for
+        # paraphrases. Small RRF constants preserve high ranks instead of letting
+        # weak long lists overwhelm the strongest route.
+        weights, rrf_constant = self.fusion_parameters(intent)
         fused: dict[int, float] = {}
         per_route: dict[int, dict[str, float]] = {}
         for route_name, ranking in routes.items():
             for rank, (index, raw_score) in enumerate(ranking):
-                fused[index] = fused.get(index, 0.0) + weights[route_name] / (60 + rank + 1)
+                fused[index] = fused.get(index, 0.0) + weights[route_name] / (
+                    rrf_constant + rank + 1
+                )
                 per_route.setdefault(index, {})[route_name] = raw_score
         ordered = sorted(fused, key=fused.get, reverse=True)[:candidate_limit]
         candidates = [Candidate(self.products[index], fused[index], per_route[index]) for index in ordered]
@@ -308,4 +333,7 @@ class MultiRouteRetriever:
             "routes": {name: len(values) for name, values in routes.items()},
             "candidate_pool": len(candidates),
             "fusion": "weighted_rrf",
+            "fusion_weights": weights,
+            "rrf_constant": rrf_constant,
+            "budget_filter": "soft_preference",
         }

@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from starter.agent import Agent
-from starter.memory import detect_intent, extract_constraints
+from starter.memory import ConversationMemory, SessionState, detect_intent, extract_constraints
 from starter.qwen_ranker import QwenRanker
 
 
@@ -134,6 +134,47 @@ def test_vietnamese_buying_intent_and_constraints() -> None:
     assert constraints["use_case"] == ["winter"]
     assert constraints["budget"] == ["100"]
     assert constraints["category"] == ["boots"]
+
+
+def test_broad_requirement_answer_extracts_multiple_slots() -> None:
+    constraints = extract_constraints(
+        "For that, what matters is: budget around $80; leather; winter hiking."
+    )
+
+    assert constraints["budget"] == ["80"]
+    assert constraints["material"] == ["leather"]
+    assert constraints["use_case"] == ["winter hiking"]
+
+
+def test_early_question_collects_multiple_requirements() -> None:
+    state = SessionState(
+        session_id="multi-slot",
+        user_profile={"preference_tags": ["fit"]},
+        intent="buying",
+        constraints={"category": ["running shoes"]},
+    )
+
+    assert ConversationMemory.choose_question(state, 1) == "other"
+
+
+def test_vague_request_is_not_saved_as_a_category() -> None:
+    assert "category" not in extract_constraints("I want something comfortable")
+
+
+def test_budget_is_soft_and_does_not_delete_over_budget_candidate(tmp_path: Path) -> None:
+    catalog = tmp_path / "catalog.jsonl"
+    _write_catalog(catalog)
+    agent = Agent(catalog)
+
+    ranking = agent.retriever.route_rankings(
+        "winter boots under 50",
+        {"category": ["boots"], "budget": ["50"]},
+        "buying",
+        3,
+    )["metadata"]
+    ranked_ids = {agent.retriever.ids[index] for index, _ in ranking}
+
+    assert "BOOT-BLACK" in ranked_ids
 
 
 def test_initial_mcq_intent_hint_wins_first_turn(tmp_path: Path) -> None:

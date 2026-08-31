@@ -1,0 +1,47 @@
+{
+  "sample_count": 200,
+  "embedding_backend": "sbert",
+  "faiss": true,
+  "route_limit": 200,
+  "hit_rate": {
+    "bm25": {
+      "@10": 0.165,
+      "@30": 0.32,
+      "@50": 0.395,
+      "@100": 0.495,
+      "@160": 0.6
+    },
+    "vector": {
+      "@10": 0.11,
+      "@30": 0.18,
+      "@50": 0.22,
+      "@100": 0.31,
+      "@160": 0.365
+    },
+    "metadata": {
+      "@10": 0.68,
+      "@30": 0.81,
+      "@50": 0.83,
+      "@100": 0.855,
+      "@160": 0.87
+    },
+    "fusion": {
+      "@10": 0.69,
+      "@30": 0.8,
+      "@50": 0.83,
+      "@100": 0.87,
+      "@160": 0.895
+    }
+  },
+  "misses_at_route_limit": {
+    "bm25": 71,
+    "vector": 123,
+    "metadata": 24,
+    "fusion": 19
+  },
+  "bm25_and_vector_shared_misses": 56,
+  "notes": {
+    "scope": "First user turn only; use local_evaluator.py for end-to-end metrics.",
+    "budget_filter": "Soft preference; it never deletes a candidate globally."
+  }
+}

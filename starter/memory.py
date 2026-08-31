@@ -34,6 +34,16 @@ VI_COLORS = {
     "tím": "purple", "vàng": "yellow", "cam": "orange", "be": "beige",
 }
 
+VAGUE_CATEGORY_TERMS = {
+    "something", "anything", "item", "product", "comfortable", "durable",
+    "nice", "good", "best", "new", "gift", "option", "options",
+}
+
+
+def _is_specific_category(value: str) -> bool:
+    category_tokens = set(tokens(value))
+    return bool(category_tokens) and bool(category_tokens - VAGUE_CATEGORY_TERMS)
+
 
 def detect_intent(message: str, current: str | None) -> tuple[str, bool]:
     text = message.lower()
@@ -74,7 +84,7 @@ def extract_constraints(message: str) -> dict[str, list[str]]:
     )
     if category_match:
         category = category_match.group(1).strip(" .,")
-        if category and len(category.split()) <= 12:
+        if category and len(category.split()) <= 12 and _is_specific_category(category):
             found["category"] = [category]
 
     vietnamese_categories = (
@@ -132,7 +142,13 @@ def extract_constraints(message: str) -> dict[str, list[str]]:
         for value in re.split(r";|,\s+(?:and\s+)?", requirement.group(1)):
             clean = value.strip(" .,")
             if clean:
-                found.setdefault(classify_constraint(clean), []).append(clean)
+                attribute = classify_constraint(clean)
+                # The dedicated parsers above already normalize numeric budgets
+                # and exact material/color values. Avoid retaining a second,
+                # differently worded copy of the same requirement.
+                if attribute == "budget" and "budget" in found:
+                    continue
+                found.setdefault(attribute, []).append(clean)
     return {key: list(dict.fromkeys(values)) for key, values in found.items()}
 
 
@@ -310,6 +326,20 @@ class ConversationMemory:
     def choose_question(state: SessionState, turn: int) -> str | None:
         if turn >= 7:
             return None
+        # One broad early question lets the customer state several requirements
+        # in a single voice turn. extract_constraints() classifies every value in
+        # the resulting semicolon-separated answer, reducing rigid MCQ turns.
+        known_preferences = {
+            attribute for attribute in state.constraints if attribute != "category"
+        }
+        if (
+            "category" in state.constraints
+            and len(known_preferences) < 2
+            and "other" not in state.asked_attributes
+            and "other" not in state.no_preference
+            and turn <= 2
+        ):
+            return "other"
         profile_tags = [str(item).lower() for item in state.user_profile.get("preference_tags", [])]
         profile_map = {
             "material": "material", "fit": "size", "style": "style",
@@ -343,7 +373,7 @@ QUESTION_TEXT = {
     "budget": "What budget should I stay within?",
     "feature": "Which product feature matters most to you?",
     "use_case": "What activity or occasion will you use it for?",
-    "other": "Is there another requirement I should consider?",
+    "other": "What are your most important requirements, such as budget, material, fit, or use case?",
 }
 
 def localized_question(attribute: str | None, user_message: str) -> str:

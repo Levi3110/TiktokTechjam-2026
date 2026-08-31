@@ -222,7 +222,7 @@ class Agent:
             retrieval_query,
             decision.constraints,
             decision.intent,
-            candidate_limit=max(80, top_k * 8),
+            candidate_limit=max(160, top_k * 16),
         )
 
         evidence_text = " ".join(

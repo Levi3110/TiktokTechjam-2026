@@ -77,8 +77,8 @@ User turn -> intent router
                          \-> semantic session/profile memory RAG -/
 ```
 
-- `starter/retrieval.py` builds BM25 and multilingual SBERT vectors for the 50,000-row catalog. Vectors are cached in `.cache/`; FAISS performs dense search.
-- `starter/memory.py` stores anonymized profile context, conversation turns, constraints, asked fields, intent overrides, and retrieves relevant memories semantically.
+- `starter/retrieval.py` builds BM25 and multilingual SBERT vectors for the 50,000-row catalog. Vectors are cached in `.cache/`; FAISS performs dense search. Each route retrieves 200 candidates before flow-specific weighted-RRF fusion, and budget is a soft preference rather than a destructive hard filter.
+- `starter/memory.py` stores anonymized profile context, conversation turns, constraints, asked fields, intent overrides, and retrieves relevant memories semantically. An early broad question can fill multiple requirement slots from one voice answer.
 - `starter/qwen_ranker.py` reranks the candidate pool through a private
   OpenAI-compatible `qwen3.6-27b` vLLM endpoint. A circuit breaker falls back to
   weighted RRF when the model is unavailable.
@@ -90,8 +90,8 @@ User turn -> intent router
   product memory.
 
 With Qwen disabled to isolate retrieval quality, the implemented agent scores
-Hit Rate@10 `0.63`, MRR `0.265123`, MTTC `5.96`, and Technical Score
-`0.495337` on all 200 public sessions. The deterministic run is saved to
+Hit Rate@10 `0.675`, MRR `0.412635`, MTTC `4.815`, and Technical Score
+`0.58499` on all 200 public sessions. The deterministic run is saved to
 `results.json` (which is gitignored).
 
 Install and configure:
@@ -426,10 +426,18 @@ The evaluator writes detailed per-session output to the gitignored
 [`docs/namazon_results.json`](docs/namazon_results.json):
 
 ```text
-Hit Rate@10:    0.63
-MRR:            0.265123
-MTTC:           5.96 turns
-TechnicalScore: 0.495337
+Hit Rate@10:    0.675
+MRR:            0.412635
+MTTC:           4.815 turns
+TechnicalScore: 0.58499
+```
+
+The first-turn route diagnostic is stored in
+[`docs/retrieval_diagnostics.json`](docs/retrieval_diagnostics.json). Re-run it
+to compare BM25, SBERT/FAISS, metadata, and fused recall at several cutoffs:
+
+```bash
+QWEN_RERANK_ENABLED=false .venv/bin/python scripts/retrieval_diagnostics.py
 ```
 
 Run the regression suite separately:

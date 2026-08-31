@@ -8,7 +8,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from starter.retrieval import Candidate, flatten
+from starter.retrieval import Candidate, flatten, product_document, tokens
 
 
 DEFAULT_MODEL = "qwen3.6-27b"
@@ -57,12 +57,60 @@ class QwenRanker:
                     "categories": product.get("categories", []),
                     "features": flatten(product.get("features"))[:260],
                     "details": flatten(product.get("details"))[:220],
+                    "store": product.get("store"),
                     "price": product.get("price"),
                     "rating": product.get("average_rating"),
+                    "rating_count": product.get("rating_number"),
                     "retrieval_score": round(candidate.score, 6),
                 }
             )
         return result
+
+    @staticmethod
+    def _constraint_rerank(
+        candidates: list[Candidate],
+        constraints: dict[str, list[str]],
+    ) -> list[Candidate]:
+        """Promote constraint coverage before optional LLM reranking.
+
+        This stage operates on the wide fused pool. It gives Qwen a compact,
+        evidence-rich top 30 and is also the deterministic fallback when the
+        private endpoint is unavailable.
+        """
+        scored: list[tuple[float, int, Candidate]] = []
+        budget = None
+        if constraints.get("budget"):
+            numeric = re.search(r"\d+(?:\.\d+)?", constraints["budget"][-1].replace(",", ""))
+            budget = float(numeric.group()) if numeric else None
+        for position, candidate in enumerate(candidates):
+            product = candidate.product
+            document = product_document(product).lower()
+            document_tokens = set(tokens(document))
+            score = 0.0
+            for attribute, values in constraints.items():
+                if attribute == "budget":
+                    continue
+                weight = 2.0 if attribute == "category" else 3.0
+                for value in values:
+                    normalized = value.lower().strip()
+                    if not normalized:
+                        continue
+                    if normalized in document:
+                        score += weight
+                        continue
+                    value_tokens = set(tokens(normalized))
+                    if value_tokens:
+                        score += weight * len(value_tokens & document_tokens) / len(value_tokens)
+            if budget is not None:
+                try:
+                    score += 0.75 if float(product.get("price")) <= budget else -0.25
+                except (TypeError, ValueError):
+                    pass
+            score += 0.35 * float(candidate.route_scores.get("metadata", 0.0))
+            score += 0.05 * len(candidate.route_scores)
+            scored.append((score, -position, candidate))
+        scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        return [candidate for _, _, candidate in scored]
 
     @staticmethod
     def _parse_json(content: str) -> dict[str, Any]:
@@ -86,6 +134,7 @@ class QwenRanker:
         top_k: int,
         proposed_question: str | None,
     ) -> RankResult:
+        ordered_candidates = self._constraint_rerank(candidates, constraints)
         fallback_message = (
             "I ranked the products that best satisfy your requirements."
             if intent == "buying"
@@ -99,7 +148,7 @@ class QwenRanker:
             usage={"prompt_tokens": 0, "completion_tokens": 0},
             provider="weighted_rrf",
         )
-        if not self.enabled or not candidates or time.monotonic() < self._disabled_until:
+        if not self.enabled or not ordered_candidates or time.monotonic() < self._disabled_until:
             return fallback
         try:
             openai = importlib.import_module("openai")
@@ -124,7 +173,7 @@ class QwenRanker:
                     "user_query": query,
                     "semantic_memory": memory,
                     "constraints": constraints,
-                    "candidate_products": self._candidate_payload(candidates),
+                    "candidate_products": self._candidate_payload(ordered_candidates),
                     "output_schema": {
                         "ranked_ids": ["parent_asin"],
                         "message": "short, friendly English response",
@@ -145,7 +194,10 @@ class QwenRanker:
             )
             content = response.choices[0].message.content or ""
             payload = self._parse_json(content)
-            by_id = {str(candidate.product["parent_asin"]): candidate for candidate in candidates}
+            by_id = {
+                str(candidate.product["parent_asin"]): candidate
+                for candidate in ordered_candidates
+            }
             ranked: list[Candidate] = []
             seen: set[str] = set()
             for value in payload.get("ranked_ids", []):
@@ -155,7 +207,7 @@ class QwenRanker:
                     seen.add(product_id)
             ranked.extend(
                 candidate
-                for candidate in candidates
+                for candidate in ordered_candidates
                 if str(candidate.product["parent_asin"]) not in seen
             )
             ask_attribute = payload.get("ask_attribute")
