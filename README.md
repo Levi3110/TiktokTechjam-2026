@@ -555,10 +555,6 @@ deployment automation.
   hybrid retrieval/RAG, backend integration, voice/avatar coordination, UI,
   evaluation, release preparation, and documentation.
 
-- **[ADD OTHER TEAM MEMBERS, IF ANY]** — [specific responsibilities].
-
-Remove the second line if this is a solo submission.
-
 ## Public Repository Checklist
 
 - Publish the prepared repository as
