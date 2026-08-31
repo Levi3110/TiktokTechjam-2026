@@ -20,7 +20,7 @@ contract.
 Submission-ready written copy is available in
 [`DEVPOST_SUBMISSION.md`](DEVPOST_SUBMISSION.md). Replace its bracketed GitHub,
 demo, and remaining team fields before submitting. The planned public repository
-is [Levi3110/NAmazon](https://github.com/Levi3110/NAmazon).
+is [Levi3110/TiktokTechjam-2026](https://github.com/Levi3110/TiktokTechjam-2026).
 
 ## What You Receive
 
@@ -561,7 +561,7 @@ Remove the second line if this is a solo submission.
 ## Public Repository Checklist
 
 - Publish the prepared repository as
-  `https://github.com/Levi3110/NAmazon` and verify that the URL is public.
+  `https://github.com/Levi3110/TiktokTechjam-2026` and verify that the URL is public.
 - Do not commit `.env`, model checkpoints, caches, generated results, or the
   50,000-row catalog; their setup/download steps are documented above.
 - Include all first-party source, tests, docs, `.env.example`, requirements,

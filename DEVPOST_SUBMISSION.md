@@ -2,7 +2,7 @@
 
 > Replace every bracketed field before submission.
 
-- **Public GitHub repository:** https://github.com/Levi3110/NAmazon
+- **Public GitHub repository:** https://github.com/Levi3110/TiktokTechjam-2026
 - **Demo video or hosted demo:** [DEMO URL]
 - **Team:** Levi3110 (Team Leader); [ADD OTHER MEMBERS, IF ANY]
 
@@ -243,7 +243,7 @@ Remove the second line if this is a solo submission.
 ## Public Repository
 
 Source, setup instructions, evaluator reproduction, tests, and architecture:
-**https://github.com/Levi3110/NAmazon**
+**https://github.com/Levi3110/TiktokTechjam-2026**
 
 First-party NAmazon source is released under Apache License 2.0. Amazon Reviews
 2023 data, Wav2Lip/model checkpoints, LiveTalking, LiveKit, the avatar, and all
