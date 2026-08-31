@@ -1,0 +1,68 @@
+[
+  {
+    "id": "phone-aurora-x",
+    "name": "Aurora X 5G",
+    "category": "dien-thoai",
+    "price": 12990000,
+    "currency": "VND",
+    "description": "Điện thoại 5G cân bằng, màn hình OLED 120 Hz, pin 5000 mAh và camera chống rung quang học.",
+    "attributes": {"brand": "Aurora", "ram": "8 GB", "storage": "256 GB", "color": ["đen", "xanh"], "use_case": ["chụp ảnh", "hằng ngày"]},
+    "image": "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&q=80",
+    "stock": 18
+  },
+  {
+    "id": "phone-nova-lite",
+    "name": "Nova Lite",
+    "category": "dien-thoai",
+    "price": 7490000,
+    "currency": "VND",
+    "description": "Điện thoại nhẹ, pin dùng hai ngày, màn hình AMOLED và camera chính 50 MP.",
+    "attributes": {"brand": "Nova", "ram": "8 GB", "storage": "128 GB", "color": ["trắng", "tím"], "use_case": ["sinh viên", "pin lâu"]},
+    "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+    "stock": 31
+  },
+  {
+    "id": "laptop-orbit-pro",
+    "name": "Orbit Pro 14",
+    "category": "laptop",
+    "price": 22990000,
+    "currency": "VND",
+    "description": "Laptop nhôm 14 inch, 16 GB RAM, SSD 512 GB, màn hình 2.8K phù hợp lập trình và sáng tạo nội dung.",
+    "attributes": {"brand": "Orbit", "ram": "16 GB", "storage": "512 GB", "weight": "1.35 kg", "use_case": ["lập trình", "đồ họa"]},
+    "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80",
+    "stock": 9
+  },
+  {
+    "id": "laptop-sprout-air",
+    "name": "Sprout Air 13",
+    "category": "laptop",
+    "price": 16990000,
+    "currency": "VND",
+    "description": "Laptop mỏng nhẹ 1.1 kg, pin 15 giờ, 16 GB RAM dành cho học tập và công việc văn phòng.",
+    "attributes": {"brand": "Sprout", "ram": "16 GB", "storage": "512 GB", "weight": "1.1 kg", "use_case": ["văn phòng", "sinh viên"]},
+    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+    "stock": 15
+  },
+  {
+    "id": "headphone-wave-anc",
+    "name": "Wave ANC 2",
+    "category": "tai-nghe",
+    "price": 3290000,
+    "currency": "VND",
+    "description": "Tai nghe chụp tai chống ồn chủ động, pin 45 giờ và hỗ trợ kết nối đồng thời hai thiết bị.",
+    "attributes": {"brand": "Wave", "type": "over-ear", "color": ["đen", "kem"], "use_case": ["du lịch", "làm việc"]},
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+    "stock": 42
+  },
+  {
+    "id": "headphone-buds-go",
+    "name": "Buds Go",
+    "category": "tai-nghe",
+    "price": 1490000,
+    "currency": "VND",
+    "description": "Tai nghe true wireless nhỏ gọn, kháng nước IPX5, âm thanh rõ cho cuộc gọi và luyện tập.",
+    "attributes": {"brand": "Buds", "type": "true-wireless", "color": ["trắng", "xanh"], "use_case": ["thể thao", "gọi điện"]},
+    "image": "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?auto=format&fit=crop&w=800&q=80",
+    "stock": 57
+  }
+]
