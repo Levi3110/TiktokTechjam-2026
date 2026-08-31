@@ -1,0 +1,16 @@
+NAmazon
+Copyright 2026 Levi3110 and NAmazon contributors
+
+First-party NAmazon source code is licensed under the Apache License, Version
+2.0. This notice does not relicense third-party software, datasets, model
+weights, product metadata, images, or avatar assets.
+
+NAmazon integrates with or depends on third-party projects and services,
+including LiveTalking, LiveKit, Wav2Lip, Faster-Whisper, Sentence Transformers,
+FAISS, PyTorch, Edge TTS, DuckDuckGo, and Amazon Reviews 2023. Their respective
+copyright notices, licenses, model cards, terms, and data-use conditions apply.
+
+LiveTalking upstream: https://github.com/lipku/LiveTalking
+Amazon Reviews 2023 attribution: https://amazon-reviews-2023.github.io/
+
+See DATA_ATTRIBUTION.md and the setup documentation for additional details.
