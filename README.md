@@ -68,14 +68,29 @@ The command writes per-session results and aggregate metrics to `results.json`.
 
 The starter in this workspace has been upgraded to a full two-flow RAG agent:
 
-```text
-User turn -> intent router
-  OUT OF SCOPE -> fixed shopping-only boundary (no LLM call)
-  BUYING  -> constraint state -> BM25 + FAISS + metadata -> evidence gate -> Qwen rerank
-  BROWSING -> topic context  -> BM25 + FAISS + category -> evidence gate -> Qwen topics
-  WEAK EVIDENCE -> one deterministic clarification question (no LLM call)
-                         \-> semantic session/profile memory RAG -/
+```mermaid
+flowchart TD
+    UI[Typed input or LiveKit transcript] --> SCOPE{Shopping scope?}
+    SCOPE -- No --> BOUNDARY[Fixed shopping-only response]
+    SCOPE -- Yes --> PLAN[Read-only intent and constraint classifier]
+    PLAN --> REDUCER[Single-writer state reducer]
+    REDUCER --> INTENT{Current intent}
+    INTENT -- Buying --> BUY[Buying query: hard constraints and preferences]
+    INTENT -- Browsing --> BROWSE[Browsing query: topic, category, and memory context]
+    BUY --> RETRIEVE[BM25 + SBERT/FAISS + metadata routes]
+    BROWSE --> RETRIEVE
+    MEMORY[Profile + semantic session memory] --> BUY
+    MEMORY --> BROWSE
+    RETRIEVE --> FUSION[Flow-specific weighted RRF: 200 per route, 160 fused]
+    FUSION --> EVIDENCE{Enough catalog evidence?}
+    EVIDENCE -- No --> QUESTION[Deterministic clarification; no LLM call]
+    EVIDENCE -- Yes --> RANK[Constraint preselection + optional Qwen reranking]
+    RANK --> RESPONSE[Grounded English response + up to 10 catalog IDs]
+    QUESTION --> RESPONSE
 ```
+
+The complete runtime, state, Buying, Browsing, voice, confirmation, and fallback
+workflow is documented in [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
 
 - `starter/retrieval.py` builds BM25 and multilingual SBERT vectors for the 50,000-row catalog. Vectors are cached in `.cache/`; FAISS performs dense search. Each route retrieves 200 candidates before flow-specific weighted-RRF fusion, and budget is a soft preference rather than a destructive hard filter.
 - `starter/memory.py` stores anonymized profile context, conversation turns, constraints, asked fields, intent overrides, and retrieves relevant memories semantically. An early broad question can fill multiple requirement slots from one voice answer.
@@ -557,6 +572,8 @@ docs/agent_api_contract.json      machine-readable Agent contract
 docs/evaluation_config.json       scoring configuration
 docs/baseline_results.json        reproducible weak-starter reference score
 docs/namazon_results.json         implemented-agent aggregate result
+docs/retrieval_diagnostics.json   route-level recall measurements
+docs/WORKFLOW.md                  complete Buying/Browsing and runtime workflow
 starter/agent.py                  supervisor and official Agent interface
 starter/retrieval.py              BM25, FAISS, filters, and rank fusion
 starter/memory.py                 checkpointed semantic conversation memory
@@ -566,6 +583,7 @@ evaluator/local_evaluator.py      public-set simulator and scorer
 web_demo.py                       combined frontend and backend demo server
 livekit_stt_worker.py             LiveKit microphone speech-to-text worker
 run_namazon.py                    one-command three-service supervisor
+scripts/retrieval_diagnostics.py  BM25/SBERT/metadata/fusion recall debugger
 tests/                            regression and interface tests
 ```
 

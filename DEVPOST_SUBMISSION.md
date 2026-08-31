@@ -83,6 +83,10 @@ The interactive stack is supervised by one command. It starts LiveKit, waits for
 readiness, starts LiveTalking, then starts the combined frontend/backend and
 opens the browser.
 
+The repository includes a detailed, implementation-aligned workflow for the
+Buying, Browsing, voice, memory, retrieval, ranking, and confirmation paths in
+[`docs/WORKFLOW.md`](docs/WORKFLOW.md).
+
 ## Development Tools
 
 - Visual Studio Code for Python, frontend, and configuration development.

@@ -36,11 +36,11 @@ def main() -> None:
     if not 1 <= args.top_k <= 10:
         raise SystemExit("--top-k must be between 1 and 10")
 
-    print("Đang nạp catalog, SBERT và FAISS...")
+    print("Loading the catalog, SBERT, and FAISS...")
     agent = Agent(args.catalog)
     session_id = f"demo_{uuid.uuid4().hex}"
     profile = {
-        "summary": "Ưu tiên sự thoải mái, độ bền và sản phẩm phù hợp nhu cầu.",
+        "summary": "Prioritizes comfort, durability, and products that fit the intended use.",
         "preference_tags": ["comfort", "durability"],
         "rating_style": "usually positive",
     }
@@ -50,24 +50,24 @@ def main() -> None:
         print_response(agent, agent.respond(session_id, args.message, 1, args.top_k))
         return
 
-    print("Sẵn sàng. Gõ /reset để xóa memory, /quit để thoát.")
+    print("Ready. Type /reset to clear conversation memory or /quit to exit.")
     turn = 1
     while True:
         try:
-            message = input("\nBạn: ").strip()
+            message = input("\nYou: ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\nĐã thoát.")
+            print("\nExited.")
             return
         if not message:
             continue
         if message.lower() in {"/quit", "/exit"}:
-            print("Đã thoát.")
+            print("Exited.")
             return
         if message.lower() == "/reset":
             session_id = f"demo_{uuid.uuid4().hex}"
             agent.reset(session_id, profile)
             turn = 1
-            print("Đã xóa memory hội thoại.")
+            print("Conversation memory cleared.")
             continue
         print_response(agent, agent.respond(session_id, message, turn, args.top_k))
         turn += 1
