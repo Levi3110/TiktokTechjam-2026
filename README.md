@@ -174,7 +174,8 @@ On macOS, you can alternatively double-click `start_namazon.command`. If macOS
 does not allow it to run yet, execute this once:
 
 ```bash
-chmod +x start_namazon.command
+chmod +x chmod +x start_namazon.command
+./start_namazon.command
 ```
 
 Use `--no-browser` when you do not want the browser to open automatically:
