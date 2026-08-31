@@ -152,14 +152,38 @@ NAmazon achieved:
 - MTTC: **4.815 turns**
 - Technical Score: **0.58499**
 
-This reproducible run reports zero LLM tokens. The optional self-hosted Qwen
-path has no per-token vendor charge in the current setup, but hardware cost and
-end-to-end latency have not yet been measured under a fixed benchmark protocol.
+With Qwen reranking enabled on the same 200 sessions, NAmazon achieved:
+
+- Hit Rate@10: **0.69**
+- MRR: **0.481871**
+- MTTC: **4.865 turns**
+- Technical Score: **0.612261**
+- Prompt tokens: **2,494,783**
+- Completion tokens: **76,797**
+- Total tokens: **2,571,580**
+
+The Qwen-enabled evaluator ran sequentially in **5,542.40 seconds** (92.373
+minutes), averaging **27.712 wall-clock seconds per session**. This is an
+end-to-end full-suite average rather than a per-turn p50/p95 measurement. The
+self-hosted endpoint had no per-token vendor API charge. The run used local
+FAISS, no paid vector database, and existing development hardware, so the
+observed incremental direct monetary cost was **$0**. Electricity and underlying
+infrastructure opportunity cost were not separately estimated.
+
+The Qwen-disabled run reports zero LLM tokens and demonstrates the required
+network-independent fallback. Full Qwen measurements are stored in
+[`docs/qwen_results.json`](docs/qwen_results.json).
 
 Reproduce the evaluation after setup:
 
 ```bash
 QWEN_RERANK_ENABLED=false .venv/bin/python -m evaluator.local_evaluator
+```
+
+Reproduce the Qwen-enabled measurement with:
+
+```bash
+QWEN_RERANK_ENABLED=true .venv/bin/python -m evaluator.local_evaluator --output results-qwen.json
 ```
 
 Route-level recall can be reproduced independently with:

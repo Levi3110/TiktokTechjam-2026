@@ -109,6 +109,13 @@ Hit Rate@10 `0.675`, MRR `0.412635`, MTTC `4.815`, and Technical Score
 `0.58499` on all 200 public sessions. The deterministic run is saved to
 `results.json` (which is gitignored).
 
+With Qwen enabled, the same 200-session evaluator scores Hit Rate@10 `0.69`,
+MRR `0.481871`, MTTC `4.865`, and Technical Score `0.612261`. Qwen reports
+`2,494,783` prompt tokens and `76,797` completion tokens (`2,571,580` total).
+The complete sequential run takes `5,542.40` seconds (`92.373` minutes), or
+`27.712` wall-clock seconds per session on average. These aggregate measurements
+are stored in [`docs/qwen_results.json`](docs/qwen_results.json).
+
 Install and configure:
 
 ```bash
@@ -455,6 +462,26 @@ to compare BM25, SBERT/FAISS, metadata, and fused recall at several cutoffs:
 QWEN_RERANK_ENABLED=false .venv/bin/python scripts/retrieval_diagnostics.py
 ```
 
+Run the Qwen-enabled evaluation and collect real model usage with:
+
+```bash
+QWEN_RERANK_ENABLED=true .venv/bin/python -m evaluator.local_evaluator --output results-qwen.json
+```
+
+The measured Qwen-enabled aggregate is:
+
+```text
+Hit Rate@10:       0.69
+MRR:               0.481871
+MTTC:              4.865 turns
+TechnicalScore:    0.612261
+Prompt tokens:     2,494,783
+Completion tokens: 76,797
+Total tokens:      2,571,580
+Full-suite time:   5,542.40 seconds (200 sequential multi-turn sessions)
+Average time:      27.712 wall-clock seconds per session
+```
+
 Run the regression suite separately:
 
 ```bash
@@ -550,13 +577,17 @@ Only exact `parent_asin` equality produces a hit. Core metrics are also reported
 ## Model Choice and Cost
 
 The optional reranker uses a self-hosted `qwen3.6-27b` model through a private
-OpenAI-compatible vLLM endpoint. It has no per-token third-party API charge in
-this setup, but hardware and operating costs were not measured. Actual prompt
-and completion token counts are returned by the model client in each Agent
-response. The reproducible 200-session result above disables Qwen and therefore
-reports zero model tokens. End-to-end Qwen, speech, and avatar latency has not
-yet been benchmarked under a fixed hardware/load protocol and is disclosed as a
-current evaluation limitation.
+OpenAI-compatible vLLM endpoint. The measured 200-session Qwen run reports
+`2,494,783` prompt and `76,797` completion tokens. It has no per-token vendor API
+charge, no paid vector database, and required no additional hardware purchase or
+rental, so the observed incremental direct monetary cost was `$0`. The run used
+existing development hardware; electricity and underlying infrastructure
+opportunity cost were not separately estimated.
+
+The complete sequential evaluator took `5,542.40` seconds, averaging `27.712`
+wall-clock seconds per session. This is a full-suite end-to-end average, not a
+per-turn p50/p95 benchmark. The offline 200-session result disables Qwen,
+reports zero model tokens, and remains the network-independent fallback.
 
 Endpoint URLs and keys must remain in the gitignored `.env`. Optional Edge TTS
 and DuckDuckGo preview requests are demo dependencies, while the official agent
@@ -572,6 +603,7 @@ docs/agent_api_contract.json      machine-readable Agent contract
 docs/evaluation_config.json       scoring configuration
 docs/baseline_results.json        reproducible weak-starter reference score
 docs/namazon_results.json         implemented-agent aggregate result
+docs/qwen_results.json            Qwen metrics, tokens, latency, and cost disclosure
 docs/retrieval_diagnostics.json   route-level recall measurements
 docs/WORKFLOW.md                  complete Buying/Browsing and runtime workflow
 starter/agent.py                  supervisor and official Agent interface

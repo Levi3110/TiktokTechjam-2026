@@ -1,0 +1,42 @@
+{
+  "system": "NAmazon hybrid retrieval agent with Qwen reranking",
+  "dataset": "data/public_set.jsonl",
+  "catalog": "data/catalog.jsonl",
+  "sample_count": 200,
+  "qwen_reranking_enabled": true,
+  "model": "qwen3.6-27b",
+  "hit_rate_at_10": 0.69,
+  "mrr": 0.481871,
+  "mttc": 4.865,
+  "efficiency": 0.6135,
+  "technical_score": 0.612261,
+  "reported_token_usage": {
+    "prompt_tokens": 2494783,
+    "completion_tokens": 76797,
+    "total_tokens": 2571580,
+    "average_prompt_tokens_per_session": 12473.915,
+    "average_completion_tokens_per_session": 383.985,
+    "average_total_tokens_per_session": 12857.9
+  },
+  "latency_disclosure": {
+    "measurement": "Sequential wall-clock time for the complete 200-session multi-turn evaluator",
+    "wall_clock_seconds": 5542.4,
+    "wall_clock_minutes": 92.373,
+    "average_wall_clock_seconds_per_session": 27.712,
+    "throughput_sessions_per_minute": 2.165,
+    "not_measured": "Per-turn p50/p95 latency"
+  },
+  "direct_cost_disclosure": {
+    "paid_llm_api_cost_usd": 0,
+    "paid_vector_database_cost_usd": 0,
+    "additional_hardware_purchase_or_rental_usd": 0,
+    "note": "The private self-hosted endpoint had no per-token vendor charge, and the run used existing development hardware. Electricity and underlying infrastructure opportunity cost were not separately estimated."
+  },
+  "scenario_metrics": {
+    "boundary": {"sample_count": 10, "hit_rate_at_10": 0.8, "mrr": 0.573611, "mttc": 3.7},
+    "browsing": {"sample_count": 80, "hit_rate_at_10": 0.675, "mrr": 0.415184, "mttc": 4.7875},
+    "buying": {"sample_count": 80, "hit_rate_at_10": 0.6875, "mrr": 0.515813, "mttc": 4.5},
+    "intent_override": {"sample_count": 30, "hit_rate_at_10": 0.7, "mrr": 0.538611, "mttc": 6.433333}
+  },
+  "reproduce": "QWEN_RERANK_ENABLED=true .venv/bin/python -m evaluator.local_evaluator --output results-qwen.json"
+}
