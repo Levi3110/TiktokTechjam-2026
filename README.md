@@ -168,11 +168,18 @@ NAmazon uses three local server processes. Start them in this order:
 ### Start everything with one command (recommended)
 
 After completing the one-time installation below, do not open three terminals.
-Run this single command from the project directory:
+First enter the cloned repository directory. Running the command from its
+parent directory will produce a `No such file or directory` error.
 
 ```bash
-.venv/bin/python run_namazon.py
+cd "/absolute/path/to/TiktokTechjam-2026"
+python3 run_namazon.py --check
+python3 run_namazon.py
 ```
+
+The `--check` command does not start a server. It verifies LiveKit, both Python
+environments, the catalog, Faster-Whisper model, Wav2Lip checkpoint, and avatar.
+Every row must show `[OK]` before the normal start command is used.
 
 The supervisor starts LiveKit (`7880`), waits for it, starts LiveTalking
 (`8010`), then starts the combined frontend/backend (`8765`). It opens
@@ -190,7 +197,7 @@ chmod +x start_namazon.command
 Use `--no-browser` when you do not want the browser to open automatically:
 
 ```bash
-.venv/bin/python run_namazon.py --no-browser
+python3 run_namazon.py --no-browser
 ```
 
 ### First-time setup

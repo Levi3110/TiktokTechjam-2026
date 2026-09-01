@@ -54,6 +54,111 @@ def require_file(path: Path, description: str) -> None:
         raise StartupError(f"Missing {description}: {path}")
 
 
+def python_has_modules(python: Path, modules: list[str]) -> tuple[bool, str]:
+    if not python.is_file():
+        return False, f"missing Python environment: {python}"
+    probe = "\n".join(f"import {module}" for module in modules)
+    try:
+        result = subprocess.run(
+            [str(python), "-c", probe],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=90,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, f"could not inspect {python}: {exc}"
+    if result.returncode == 0:
+        return True, str(python)
+    error = (result.stderr or result.stdout).strip().splitlines()
+    return False, error[-1] if error else f"dependency probe exited with {result.returncode}"
+
+
+def run_preflight(web_python: Path, talking_python: Path) -> int:
+    livekit_binary = shutil.which("livekit-server")
+    whisper_models = (
+        PROJECT_ROOT
+        / ".models/faster-whisper/models--Systran--faster-whisper-base/snapshots"
+    )
+    checks: list[tuple[str, bool, str]] = [
+        (
+            "LiveKit server",
+            bool(livekit_binary),
+            livekit_binary or "install with: brew install livekit",
+        ),
+        (
+            "NAmazon web entry point",
+            (PROJECT_ROOT / "web_demo.py").is_file(),
+            str(PROJECT_ROOT / "web_demo.py"),
+        ),
+        (
+            "Product catalog",
+            (PROJECT_ROOT / "data/catalog.jsonl").is_file(),
+            str(PROJECT_ROOT / "data/catalog.jsonl"),
+        ),
+        (
+            "LiveTalking application",
+            (LIVETALKING_ROOT / "app.py").is_file(),
+            str(LIVETALKING_ROOT / "app.py"),
+        ),
+        (
+            "Wav2Lip checkpoint",
+            (LIVETALKING_ROOT / "models/wav2lip.pth").is_file(),
+            str(LIVETALKING_ROOT / "models/wav2lip.pth"),
+        ),
+        (
+            "NAmazon avatar",
+            (LIVETALKING_ROOT / "data/avatars/namazon_ai_face").is_dir(),
+            str(LIVETALKING_ROOT / "data/avatars/namazon_ai_face"),
+        ),
+        (
+            "Faster-Whisper base model",
+            any(whisper_models.glob("*/model.bin")),
+            str(whisper_models),
+        ),
+    ]
+    web_ok, web_detail = python_has_modules(
+        web_python,
+        [
+            "numpy",
+            "rank_bm25",
+            "faiss",
+            "sentence_transformers",
+            "livekit",
+            "faster_whisper",
+        ],
+    )
+    talking_ok, talking_detail = python_has_modules(
+        talking_python,
+        ["aiohttp", "aiortc", "cv2", "torch", "numpy"],
+    )
+    checks.extend(
+        [
+            ("NAmazon Python dependencies", web_ok, web_detail),
+            ("LiveTalking Python dependencies", talking_ok, talking_detail),
+        ]
+    )
+
+    print(f"[NAmazon] Project root: {PROJECT_ROOT}")
+    for label, passed, detail in checks:
+        print(f"[{'OK' if passed else 'MISSING'}] {label}: {detail}")
+    failed = sum(not passed for _, passed, _ in checks)
+    if failed:
+        print(
+            f"\n[NAmazon] Preflight failed: {failed} required item(s) need attention.",
+            file=sys.stderr,
+        )
+        print(
+            "[NAmazon] Complete the README 'First-time setup' section, "
+            "then run --check again.",
+            file=sys.stderr,
+        )
+        return 1
+    print("\n[NAmazon] Preflight passed. Start everything with: python3 run_namazon.py")
+    return 0
+
+
 def start_process(name: str, command: list[str], cwd: Path) -> ManagedProcess:
     print(f"[NAmazon] Starting {name}...", flush=True)
     environment = os.environ.copy()
@@ -113,12 +218,20 @@ def stop_processes(processes: list[ManagedProcess]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--no-browser", action="store_true", help="Do not open the web UI")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Validate dependencies and local assets, then exit",
+    )
     args = parser.parse_args()
 
     web_python = PROJECT_ROOT / ".venv/bin/python"
     talking_python = LIVETALKING_ROOT / ".venv/bin/python"
     livekit_binary = shutil.which("livekit-server")
     launched: list[ManagedProcess] = []
+
+    if args.check:
+        return run_preflight(web_python, talking_python)
 
     try:
         if port_is_open(7880):
