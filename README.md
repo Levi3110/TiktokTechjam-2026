@@ -17,6 +17,15 @@ The web UI, voice stack, anonymous demo memory, image previews, and avatar are
 optional demonstration layers and do not change the frozen-catalog scoring
 contract.
 
+NAmazon is built around free, open-source or open-weight components: Qwen for
+optional language understanding and reranking, Sentence Transformers for
+embeddings, FAISS for vector search, BM25 for lexical retrieval,
+faster-whisper for speech recognition, Piper for speech synthesis, and
+LiveTalking/MuseTalk for the animated avatar. The complete stack can be
+self-hosted and does not require a paid model API. Local execution has no API
+or software-license cost; cloud compute or GPU rental may still incur an
+infrastructure cost if the team chooses to use it.
+
 Submission-ready written copy is available in
 [`DEVPOST_SUBMISSION.md`](DEVPOST_SUBMISSION.md). Replace its bracketed GitHub,
 demo, and remaining team fields before submitting. The planned public repository
@@ -174,7 +183,7 @@ On macOS, you can alternatively double-click `start_namazon.command`. If macOS
 does not allow it to run yet, execute this once:
 
 ```bash
-chmod +x chmod +x start_namazon.command
+chmod +x start_namazon.command
 ./start_namazon.command
 ```
 
