@@ -173,8 +173,9 @@ parent directory will produce a `No such file or directory` error.
 
 ```bash
 cd "/absolute/path/to/TiktokTechjam-2026"
-python3 run_namazon.py --check
-python3 run_namazon.py
+chmod +x start_namazon.command
+./start_namazon.command --check
+./start_namazon.command
 ```
 
 The `--check` command does not start a server. It verifies LiveKit, both Python
@@ -186,13 +187,8 @@ The supervisor starts LiveKit (`7880`), waits for it, starts LiveTalking
 `http://127.0.0.1:8765/` automatically. Press `Ctrl+C` once in that terminal to
 stop every service started by the supervisor.
 
-On macOS, you can alternatively double-click `start_namazon.command`. If macOS
-does not allow it to run yet, execute this once:
-
-```bash
-chmod +x start_namazon.command
-./start_namazon.command
-```
+On macOS, after running `chmod` once, you can alternatively start the stack by
+double-clicking `start_namazon.command` in Finder.
 
 Use `--no-browser` when you do not want the browser to open automatically:
 
